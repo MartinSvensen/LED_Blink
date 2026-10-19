@@ -1,18 +1,12 @@
-/*
- * LED_Blink.cpp
- *
- * Created: 19.10.2026 09:23:07
- * Author : marti
- */ 
-
 #include <avr/io.h>
 
-
-int main(void)
+int main()
 {
-    /* Replace with your application code */
-    while (1) 
-    {
-    }
-}
+	PORTB &= ~(1 << PB0);  // Sett utgangsverdien til lav
+	DDRB  |=  (1 << PB0);  // Konfigurer PB0 som utgang
 
+	while (true)
+	{
+		// Behold PB0 lav
+	}
+}
