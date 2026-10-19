@@ -1,12 +1,15 @@
+#define F_CPU 1000000UL
+
 #include <avr/io.h>
+#include <util/delay.h>
 
-int main()
+int main(void)
 {
-	PORTB &= ~(1 << PB0);  // Sett utgangsverdien til lav
-	DDRB  |=  (1 << PB0);  // Konfigurer PB0 som utgang
+	DDRB |= (1 << PB0);  // Sett PB0 som utgang
 
-	while (true)
+	while (1)
 	{
-		// Behold PB0 lav
+		PORTB ^= (1 << PB0);  // Bytt mellom høy og lav
+		_delay_ms(500);
 	}
 }
