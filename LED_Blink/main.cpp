@@ -1,15 +1,24 @@
-#define F_CPU 1000000UL
-
 #include <avr/io.h>
-#include <util/delay.h>
 
-int main(void)
+int main()
 {
-	DDRB |= (1 << PB0);  // Sett PB0 som utgang
+	// LED: PD6 som utgang, starter avslått
+	PORTD &= ~(1 << PD6);
+	DDRD |= (1 << PD6);
 
-	while (1)
+	// Knapp: PD2 som inngang med intern pull-up
+	DDRD &= ~(1 << PD2);
+	PORTD |= (1 << PD2);
+
+	while (true)
 	{
-		PORTB ^= (1 << PB0);  // Bytt mellom høy og lav
-		_delay_ms(500);
+		if ((PIND & (1 << PD2)) == 0)
+		{
+			PORTD |= (1 << PD6);   // Tenn LED
+		}
+		else
+		{
+			PORTD &= ~(1 << PD6);  // Slukk LED
+		}
 	}
 }
