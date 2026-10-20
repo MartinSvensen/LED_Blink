@@ -1,34 +1,62 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-ISR(PCINT2_vect)
+bool stablePressed = false;     // Godkjent knappetilstand
+uint8_t differentSamples = 0;   // Avlesninger ulik godkjent tilstand
+
+ISR(TIMER1_COMPA_vect)
 {
-	// Reager bare når knappen er trykket, ikke ved slipp
-	if ((PIND & (1 << PD2)) == 0)
+	bool pressed = (PIND & (1 << PD2)) == 0;
+
+	if (pressed == stablePressed)
 	{
-		PORTD ^= (1 << PD6);  // Bytt LED-tilstand
+		// Tilbake til godkjent tilstand: start tellingen på nytt
+		differentSamples = 0;
+	}
+	else
+	{
+		++differentSamples;
+
+		if (differentSamples >= 20)
+		{
+			// Ny tilstand har vart i omtrent 20 ms
+			stablePressed = pressed;
+			differentSamples = 0;
+
+			if (stablePressed)
+			{
+				PORTD ^= (1 << PD6); // Bytt bare ved godkjent trykk
+			}
+		}
 	}
 }
 
 int main()
 {
-	// LED: PD6 som utgang, starter avslått
+	// LED på PD6, starter avslått
 	PORTD &= ~(1 << PD6);
 	DDRD |= (1 << PD6);
 
-	// Knapp: PD2 som inngang med pull-up
+	// Knapp på PD2 med pull-up
 	DDRD &= ~(1 << PD2);
 	PORTD |= (1 << PD2);
 
-	// PD2 har pin change-navnet PCINT18
-	PCMSK2 |= (1 << PCINT18); // Velg PD2
-	PCIFR = (1 << PCIF2);     // Slett eventuelt ventende flagg
-	PCICR |= (1 << PCIE2);    // Aktiver gruppen for port D
+	// Bruk timeravbrudd i stedet for pin change
+	PCICR &= ~(1 << PCIE2);
 
-	sei();                    // Tillat avbrudd globalt
+	// Timer1: CTC-modus, ett avbrudd hvert 1 ms ved 1 MHz
+	TCCR1A = 0;
+	TCCR1B = 0;
+	TCNT1 = 0;
+	OCR1A = 124;
+
+	TIFR1 = (1 << OCF1A);    // Slett eventuelt ventende flagg
+	TIMSK1 = (1 << OCIE1A);  // Aktiver compare match A-avbrudd
+	TCCR1B = (1 << WGM12) | (1 << CS11); // CTC, prescaler 8
+
+	sei();
 
 	while (true)
 	{
-		// Knappen håndteres av avbruddsrutinen
 	}
 }
